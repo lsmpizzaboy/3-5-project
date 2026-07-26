@@ -34,14 +34,37 @@ else:
     
     subject_totals = df.groupby('subject')['minutes'].sum().reset_index()
     
+    # 👇 새롭게 추가된 부분: 과목별로 고정된 색상표 만들기
+    unique_subjects = subject_totals['subject'].unique()
+    # Plotly의 기본 파스텔 색상표를 가져와서 과목별로 짝지어줍니다.
+    color_palette = px.colors.qualitative.Pastel 
+    color_map = {sub: color_palette[i % len(color_palette)] for i, sub in enumerate(unique_subjects)}
+    
     with col1:
-        fig_pie = px.pie(subject_totals, values='minutes', names='subject', title='과목별 공부 비율 (원 그래프)')
+        # 원 그래프에 color_discrete_map 적용
+        fig_pie = px.pie(
+            subject_totals, 
+            values='minutes', 
+            names='subject', 
+            title='과목별 공부 비율 (원 그래프)',
+            color='subject',
+            color_discrete_map=color_map # 고정 색상표 적용
+        )
         st.plotly_chart(fig_pie, use_container_width=True)
         
     with col2:
-        fig_bar = px.bar(subject_totals, x='subject', y='minutes', title='과목별 누적 공부 시간 (막대 그래프)', color='subject')
+        # 막대 그래프에 color_discrete_map 적용
+        fig_bar = px.bar(
+            subject_totals, 
+            x='subject', 
+            y='minutes', 
+            title='과목별 누적 공부 시간 (막대 그래프)', 
+            color='subject',
+            color_discrete_map=color_map # 고정 색상표 적용
+        )
         st.plotly_chart(fig_bar, use_container_width=True)
-
+    
+    
     # 2. AI 모드일 경우에만 피드백 활성화
     if "AI" in user_mode:
         st.markdown("---")

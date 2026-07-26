@@ -1,6 +1,7 @@
 import streamlit as st
 import time
 import datetime
+import streamlit.components.v1 as components
 from utils import init_supabase
 
 st.set_page_config(page_title="공부 타이머", page_icon="⏱️")
@@ -34,13 +35,30 @@ with col1:
             st.session_state.current_subject = selected_subject
             st.rerun()
     else:
-        elapsed_time = time.time() - st.session_state.start_time
-        mins, secs = divmod(int(elapsed_time), 60)
-        hours, mins = divmod(mins, 60)
-        st.warning(f"⏳ 진행 중: {hours:02d}:{mins:02d}:{secs:02d} ({st.session_state.current_subject})")
+        # 👇 파이썬 백엔드 대신 프론트엔드(자바스크립트)에서 실시간으로 시간이 가도록 수정한 부분
+        components.html(
+            f"""
+            <div style="color: #FFD700; background-color: rgba(255, 215, 0, 0.1); padding: 15px; border-radius: 5px; font-family: sans-serif; border: 1px solid rgba(255, 215, 0, 0.3);">
+                ⏳ <b>진행 중: <span id="time">00:00:00</span></b> ({st.session_state.current_subject})
+            </div>
+            <script>
+                var startTime = {st.session_state.start_time};
+                setInterval(function() {{
+                    var now = Date.now() / 1000;
+                    var elapsed = now - startTime;
+                    var h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
+                    var m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
+                    var s = Math.floor(elapsed % 60).toString().padStart(2, '0');
+                    document.getElementById('time').innerText = h + ":" + m + ":" + s;
+                }}, 1000);
+            </script>
+            """,
+            height=70
+        )
         
         if st.button("⏹️ 공부 종료 및 저장"):
             st.session_state.timer_running = False
+            elapsed_time = time.time() - st.session_state.start_time
             total_minutes = elapsed_time / 60
             
             # 수파베이스 study_logs 테이블에 저장
